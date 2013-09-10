@@ -1,0 +1,17 @@
+-- Init replication user and permission
+<%
+repl_user = node['mysql']['repl_user_name']
+repl_passwd = node['mysql']['server_repl_password']
+root_passwd = node['mysql']['server_root_password']
+%>
+FLUSH PRIVILEGES;
+-- DELETE FROM mysql.user WHERE user='<%= repl_user %>';
+-- DELETE FROM mysql.db WHERE user='<%= repl_user %>';
+-- CREATE USER '<%= repl_user %>';
+GRANT REPLICATION SLAVE ON *.* to '<%= repl_user %>'@'%' IDENTIFIED BY '<%= repl_passwd %>';
+
+-- Setup root access
+GRANT ALL ON *.* to 'root'@'%' IDENTIFIED BY '<%= root_passwd %>' with GRANT OPTION;
+GRANT ALL ON *.* to 'root'@'localhost' IDENTIFIED BY '<%= root_passwd %>' with GRANT OPTION;
+
+FLUSH PRIVILEGES;

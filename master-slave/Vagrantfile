@@ -1,0 +1,70 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "lucid64"
+  config.vm.box_url = "http://files.vagrantup.com/lucid64.box"
+  config.vm.synced_folder "../blobs", "/tmp/blobs"
+  if ENV["http_proxy"]
+    config.proxy.http = ENV["http_proxy"]
+  end
+  if ENV["https_proxy"]
+    config.proxy.https = ENV["https_proxy"]
+  end
+
+  config.vm.define "master" do |master|
+    master.vm.network :private_network, ip: "192.168.20.20"
+
+    master.vm.provision "chef_solo" do |chef|
+      chef.cookbooks_path = "../cookbooks"
+      chef.add_recipe "apt"
+      chef.add_recipe "mysql56"
+
+      chef.json = {
+        :mysql => {
+          :master => true,
+          :version => "5.6",
+          :bind_address => "0.0.0.0",
+          :server_root_password => "password",
+          :server_repl_password => "password",
+          :tunable => {
+            :server_id => "1",
+            :log_bin => "master-bin",
+          }
+        }
+      }
+    end
+
+    master.vm.network "forwarded_port", guest: 3306, host: 6606
+  end
+
+  config.vm.define "slave" do |slave|
+    slave.vm.network :private_network, ip: "192.168.20.21"
+
+    slave.vm.provision "chef_solo" do |chef|
+      chef.cookbooks_path = "../cookbooks"
+      chef.add_recipe "apt"
+      chef.add_recipe "mysql56"
+
+      chef.json = {
+        :mysql => {
+          # TODO: use databag
+          :master_ip =>  "192.168.20.20",
+          :bind_address => "0.0.0.0",
+          :version => "5.6",
+          :server_root_password => "password",
+          :server_repl_password => "password",
+          :tunable => {
+            :relay_log => "slave-relay-bin",
+            :server_id => "2"
+          }
+        }
+      }
+    end
+
+    slave.vm.network "forwarded_port", guest: 3306, host: 6607
+  end
+end

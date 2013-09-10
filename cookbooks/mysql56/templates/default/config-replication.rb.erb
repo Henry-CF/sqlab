@@ -1,0 +1,27 @@
+#!/usr/bin/env ruby
+require "rubygems"
+require "mysql2"
+
+is_master = <%= node['mysql']['master'] || nil %>
+if ! is_master
+  master_ip = "<%= node["mysql"]["master_ip"] %>"
+  client = Mysql2::Client.new(
+    :host       => "localhost",
+    :user_name  => "root",
+    :password   => "<%= node["mysql"]["server_root_password"] %>",
+    :database   => "mysql",
+    :socket     => "/var/run/mysqld/mysqld.sock"
+  )
+  setup_master_cmd = %Q[
+      CHANGE MASTER TO
+        MASTER_HOST='#{master_ip}',
+        MASTER_USER='repl',
+        MASTER_PASSWORD='<%= node.mysql.server_repl_password %>'
+  ]
+  puts "Using #{master_ip} as master"
+  puts "#{setup_master_cmd}"
+
+  client.query("stop slave")
+  client.query(setup_master_cmd)
+  client.query("start slave")
+end
