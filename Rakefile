@@ -1,13 +1,23 @@
 require 'digest/md5'
 
-INSTALLATION_FILE="mysql-5.6.13-linux-glibc2.5-x86_64.tar.gz"
 BLOB_FOLDER = File.expand_path("./blobs", File.dirname(__FILE__))
-DOWNLOAD_URL = "http://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-5.6.13-linux-glibc2.5-x86_64.tar.gz/from/http://cdn.mysql.com/"
-MD5SUM="809b35f6ce30029cc576f4c31f0803b1"
+REQUIRED_FILES = {
+  "mysql-5.6.13-linux-glibc2.5-x86_64.tar.gz" => {
+    url: "http://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-5.6.13-linux-glibc2.5-x86_64.tar.gz/from/http://cdn.mysql.com/",
+    md5: "809b35f6ce30029cc576f4c31f0803b1"
+  },
+  "percona-xtrabackup-2.1.5-680-Linux-x86_64.tar.gz" => {
+    url: "http://www.percona.com/downloads/XtraBackup/LATEST/binary/Linux/x86_64/percona-xtrabackup-2.1.5-680-Linux-x86_64.tar.gz",
+    md5: "5f5f570e6ead4f18683e4ce0808b26ff"
+  }
+}
 
 task :prepare do
-  unless installation_file_exits?
-    %x{pushd #{BLOB_FOLDER}; wget #{URL} -o #{INSTALLATION_FILE}; popd}
+  REQUIRED_FILES.each do |name, info|
+    unless installation_file_exits?(name, info[:md5])
+      puts "Downloading #{name} to #{BLOB_FOLDER}"
+      %x{pushd #{BLOB_FOLDER}; rm -rf #{name}; wget "#{info[:url]}" -O "#{name}"; popd}
+    end
   end
 
   res = %x{vagrant plugin list}
@@ -20,11 +30,9 @@ task :prepare do
   puts "Done!"
 end
 
-def installation_file_exits?
+def installation_file_exits?(file, md5)
   Dir.chdir(BLOB_FOLDER) do
-    return unless File.exists? INSTALLATION_FILE
-    file_md5 = Digest::MD5.file(INSTALLATION_FILE).hexdigest
-    return true if file_md5 == MD5SUM
+    return true if (File.exists? file) && (Digest::MD5.file(file).hexdigest == md5)
   end
 end
 

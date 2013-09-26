@@ -33,6 +33,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           :tunable => {
             :server_id => "1",
             :log_bin => "master-bin",
+            :log_slave_updates => "true",
           }
         }
       }
@@ -58,8 +59,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           :server_root_password => "password",
           :server_repl_password => "password",
           :tunable => {
+            :server_id => "2",
             :relay_log => "slave-relay-bin",
-            :server_id => "2"
+            :log_bin => "master-bin",
+            :log_slave_updates => "true",
           }
         }
       }

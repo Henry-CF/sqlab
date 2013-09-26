@@ -77,6 +77,10 @@ default['mysql']['tunable']['open-files-limit']     = "1024"
 
 default['mysql']['tunable']['sql_mode'] = nil
 
+# GTIDs
+default['mysql']['tunable']['gtid_mode'] = 'ON'
+
+
 default['mysql']['tunable']['skip-character-set-client-handshake'] = false
 default['mysql']['tunable']['skip-name-resolve']                   = false
 

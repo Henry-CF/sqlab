@@ -21,10 +21,19 @@ package "apparmor" do
   action :purge
 end
 
-%w{libaio1 build-essential vim}.each do |p|
+%w{libaio1 build-essential vim libdbd-mysql-perl}.each do |p|
   package p do
     action :install
   end
+end
+
+bash "rename unwanted config file" do
+  code <<-EOH
+  mv /etc/mysql/my.cnf /etc/mysql/my.cnf.bak
+  EOH
+
+  action :run
+  not_if { ::File.exists?("/etc/mysql/my.cnf.bak") }
 end
 
 group "mysql" do
@@ -35,6 +44,13 @@ user "mysql" do
   action :create
   gid "mysql"
   system true
+end
+
+directory "/var/log/mysql" do
+  owner "mysql"
+  group "mysql"
+  mode 00644
+  action :create
 end
 
 bash "Install mysql binary" do

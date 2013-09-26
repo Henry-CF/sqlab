@@ -32,6 +32,10 @@ skip-external-locking
 <%- if node['mysql']['tunable']['skip-name-resolve'] %>
 skip-name-resolve
 <%- end %>
+<%- if node['mysql']['tunable']['gtid_mode'] %>
+gtid_mode                 = <%= node['mysql']['tunable']['gtid_mode'] %>
+enforce-gtid-consistency  = true
+<%- end %>
 
 # Charset and Collation
 character-set-server = <%= node['mysql']['tunable']['character-set-server'] %>
